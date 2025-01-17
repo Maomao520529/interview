@@ -174,7 +174,7 @@ function deleteData(id) {
       emoData();
     })
     .catch((error) => {
-      console.error('Error deleting data:', error);
+      console.error(error);
     });
 }
 
