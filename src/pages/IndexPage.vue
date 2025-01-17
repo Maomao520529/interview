@@ -4,7 +4,7 @@
       <div class="q-mb-xl">
         <q-input v-model="tempData.name" label="姓名" />
         <q-input v-model="tempData.age" label="年齡" />
-        <q-btn color="primary" class="q-mt-md">新增</q-btn>
+        <q-btn color="primary" class="q-mt-md" @click="addData">新增</q-btn>
       </div>
 
       <q-table
@@ -35,7 +35,7 @@
               :props="props"
               style="min-width: 120px"
             >
-              <div>{{ col.value }}</div>
+              <div>{{ props.row[col.name] }}</div>
             </q-td>
             <q-td class="text-right" auto-width v-if="tableButtons.length > 0">
               <q-btn
@@ -80,7 +80,7 @@
 <script setup lang="ts">
 import axios from 'axios';
 import { QTableProps } from 'quasar';
-import { ref } from 'vue';
+import { ref, onMounted } from 'vue';
 interface btnType {
   label: string;
   icon: string;
@@ -123,9 +123,79 @@ const tempData = ref({
   name: '',
   age: '',
 });
-function handleClickOption(btn, data) {
-  // ...
+
+// api data
+function emoData() {
+  axios
+    .get('https://dahua.metcfire.com.tw/api/CRUDTest/a')
+    .then((response) => {
+      blockData.value = response.data;
+    })
+    .catch((error) => {
+      console.error(error);
+    });
 }
+//add
+function addData() {
+  if (!tempData.value || !tempData.value.age) {
+    alert('姓名與年紀不得為空值');
+    return;
+  } else {
+    axios
+      .post('https://dahua.metcfire.com.tw/api/CRUDTest', tempData.value)
+      .then(() => {
+        emoData();
+        tempData.value.name = '';
+        tempData.value.age = '';
+      })
+      .catch((error) => {
+        console.error(error);
+      });
+  }
+}
+
+// update
+function updateData(id, newData) {
+  axios
+    .patch(`https://dahua.metcfire.com.tw/api/CRUDTest`, { id, ...newData })
+    .then(() => {
+      emoData();
+    })
+    .catch((error) => {
+      console.error(error);
+    });
+}
+
+// delete
+function deleteData(id) {
+  axios
+    .delete(`https://dahua.metcfire.com.tw/api/CRUDTest/${id}`)
+    .then(() => {
+      emoData();
+    })
+    .catch((error) => {
+      console.error('Error deleting data:', error);
+    });
+}
+
+//update data
+function handleClickOption(btn, data) {
+  if (btn.status === 'edit') {
+    const newName = prompt('請輸入新名字:', data.name);
+    const newAge = prompt('請輸入新年齡:', data.age);
+    if (newName !== null && newAge !== null) {
+      updateData(data.id, { name: newName, age: newAge });
+    }
+  } else if (btn.status === 'delete') {
+    if (confirm('是否確定刪除該筆資料?')) {
+      deleteData(data.id);
+    }
+  }
+}
+
+onMounted(() => {
+  emoData();
+});
 </script>
 
 <style lang="scss" scoped>
